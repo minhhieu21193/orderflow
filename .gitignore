@@ -1,0 +1,17 @@
+# Binaries
+/bin/
+orderflow
+*.exe
+
+# Test / coverage output
+*.out
+coverage.*
+
+# Env files (never commit real secrets)
+.env
+.env.local
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
