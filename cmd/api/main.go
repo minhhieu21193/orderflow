@@ -1,83 +1,96 @@
-// Command api is the orderflow HTTP API entrypoint.
-//
-// The shape here — load config, build a logger, start the server, block until a
-// signal, then shut down cleanly — is the same skeleton every Go service uses.
-// The graceful-shutdown path (SIGTERM -> stop accepting -> drain in-flight ->
-// exit) is exactly what Kubernetes relies on when it terminates a pod, so it's
-// worth getting right on day one.
 package main
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
+	"sync"
 	"syscall"
-
-	"github.com/minhhieu21193/orderflow/internal/config"
-	"github.com/minhhieu21193/orderflow/internal/httpapi"
+	"time"
 )
 
-func main() {
-	// run holds all fallible startup logic so main stays a thin wrapper that
-	// turns an error into a non-zero exit code — a common Go pattern.
-	if err := run(); err != nil {
-		slog.Error("startup failed", slog.Any("error", err))
-		os.Exit(1)
+func worker(id int, jobs <-chan int, wg *sync.WaitGroup) {
+	// LỖ 1: đảm bảo Done() luôn được gọi khi hàm này thoát
+	defer wg.Done()
+	for job := range jobs {
+		time.Sleep(500 * time.Millisecond)
+		fmt.Println("worker", id, "processed job", job)
 	}
 }
 
-func run() error {
-	cfg, err := config.Load()
-	if err != nil {
-		return err
+func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
 
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: cfg.LogLevel,
-	}))
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	// NotifyContext gives a context that is cancelled the moment SIGINT or
-	// SIGTERM arrives. Everything downstream watches this ctx to know when to
-	// stop. stop() releases the signal handler when we're done.
+	// LỖ 2: khai báo channel jobs (kiểu int) và 1 sync.WaitGroup
+	jobs := make(chan int)
+	var wg sync.WaitGroup
+
+	// LỖ 3: khởi động 3 worker, nhớ Add(1) đúng chỗ đúng lúc (xem lại bài trước nếu quên vì sao)
+	for i := 1 ; i <= 3; i++ {
+		wg.Add(1)
+		go worker(i, jobs, &wg)
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
+
+	mux.HandleFunc("POST /jobs", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Job int `json:"job"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		jobs <- body.Job
+		// LỖ 4: gửi body.Job vào channel jobs — ĐỒNG BỘ, không dùng "go"
+		// (đây là chỗ quyết định srv.Shutdown() có theo dõi đúng được không)
+
+		w.WriteHeader(http.StatusAccepted)
+	})
+
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: mux,
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	srv := &http.Server{
-		Addr:    ":" + strconv.Itoa(cfg.Port),
-		Handler: httpapi.New(logger),
-	}
-
-	// ListenAndServe blocks, so it runs in its own goroutine and reports any
-	// startup error back through a channel.
-	serverErr := make(chan error, 1)
 	go func() {
-		logger.Info("server starting", slog.Int("port", cfg.Port))
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			serverErr <- err
+		err := srv.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			logger.Error("server error", "err", err)
 		}
 	}()
 
-	// Block until either the server fails to run or a shutdown signal arrives.
-	select {
-	case err := <-serverErr:
-		return err
-	case <-ctx.Done():
-		logger.Info("shutdown signal received, draining")
-	}
+	<-ctx.Done()
+	logger.Info("shutdown signal received")
 
-	// Give in-flight requests up to ShutdownTimeout to finish before forcing
-	// the process down. Shutdown stops accepting new connections immediately.
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// LỖ 5: gọi srv.Shutdown(shutdownCtx), bắt lỗi nếu có
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		return err
+		logger.Error("Shutdown server error", "err", err)
 	}
 
-	logger.Info("shutdown complete")
-	return nil
+	// LỖ 6: sau khi Shutdown xong — đóng channel jobs
+	close(jobs)
+	// LỖ 7: chờ tất cả worker xử lý hết job còn tồn trong hàng đợi (wg)
+	wg.Wait()
+	logger.Info("server stopped cleanly")
 }
