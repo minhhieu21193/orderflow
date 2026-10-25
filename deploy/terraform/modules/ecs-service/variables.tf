@@ -139,3 +139,14 @@ variable "enable_deletion_protection" {
   type        = bool
   default     = false
 }
+
+variable "kms_key_arn" {
+  description = "KMS key for the Container Insights log group."
+  type        = string
+}
+
+variable "log_retention_days" {
+  description = "Retention of the Container Insights performance log group."
+  type        = number
+  default     = 14
+}

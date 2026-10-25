@@ -51,6 +51,7 @@ module "service" {
   private_subnet_ids = module.network.private_subnet_ids
   image              = "${module.ecr.repository_url}:${var.image_tag}"
   log_group_name     = module.observability.log_group_name
+  kms_key_arn        = module.kms.key_arn
   certificate_arn    = var.certificate_arn
 
   # Database connection, only when enable_rds = true.

@@ -24,6 +24,18 @@ resource "aws_ecs_cluster" "this" {
     name  = "containerInsights"
     value = "enabled"
   }
+
+  depends_on = [aws_cloudwatch_log_group.container_insights]
+}
+
+# Container Insights would create this log group on its own, unencrypted, with
+# no retention and outside Terraform, so `make down` would leave it behind.
+# Creating it first keeps it encrypted, short-lived and destroyed with the stack.
+resource "aws_cloudwatch_log_group" "container_insights" {
+  #checkov:skip=CKV_AWS_338:Short retention is a deliberate cost choice for performance events.
+  name              = "/aws/ecs/containerinsights/${var.name}/performance"
+  retention_in_days = var.log_retention_days
+  kms_key_id        = var.kms_key_arn
 }
 
 resource "aws_ecs_cluster_capacity_providers" "this" {
