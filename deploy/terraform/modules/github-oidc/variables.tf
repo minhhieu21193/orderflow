@@ -32,3 +32,8 @@ variable "pass_role_arns" {
   description = "Task and execution role ARNs the role may pass to new task definitions."
   type        = list(string)
 }
+
+variable "task_family" {
+  description = "Task definition family the role registers revisions of."
+  type        = string
+}

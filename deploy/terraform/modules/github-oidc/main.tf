@@ -82,6 +82,19 @@ data "aws_iam_policy_document" "deploy" {
     resources = ["*"]
   }
 
+  # New revisions inherit the stack's tags, which needs TagResource at creation.
+  statement {
+    sid       = "TagNewTaskDefinitions"
+    actions   = ["ecs:TagResource"]
+    resources = ["arn:aws:ecs:*:*:task-definition/${var.task_family}:*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ecs:CreateAction"
+      values   = ["RegisterTaskDefinition"]
+    }
+  }
+
   statement {
     sid       = "Service"
     actions   = ["ecs:DescribeServices", "ecs:UpdateService"]

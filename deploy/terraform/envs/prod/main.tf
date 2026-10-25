@@ -75,6 +75,7 @@ module "github_oidc" {
   ecr_repository_arn = module.ecr.repository_arn
   kms_key_arn        = module.kms.key_arn
   ecs_service_arn    = module.service.service_arn
+  task_family        = module.service.task_family
   pass_role_arns     = [module.service.execution_role_arn, module.service.task_role_arn]
 }
 
