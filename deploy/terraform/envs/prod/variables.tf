@@ -14,3 +14,19 @@ variable "owner" {
   description = "Value of the Owner tag (person or team responsible)."
   type        = string
 }
+
+variable "image_tag" {
+  description = "Tag of the API image in this env's ECR repository (the Makefile passes the git SHA)."
+  type        = string
+}
+
+variable "alert_email" {
+  description = "Email for alarm and budget notifications."
+  type        = string
+}
+
+variable "certificate_arn" {
+  description = "Optional ACM certificate ARN for HTTPS on the ALB."
+  type        = string
+  default     = null
+}

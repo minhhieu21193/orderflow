@@ -27,3 +27,34 @@ module "ecr" {
   name        = local.name
   kms_key_arn = module.kms.key_arn
 }
+
+module "observability" {
+  source = "../../modules/observability"
+
+  name                    = local.name
+  kms_key_arn             = module.kms.key_arn
+  alarm_email             = var.alert_email
+  cluster_name            = module.service.cluster_name
+  service_name            = module.service.service_name
+  alb_arn_suffix          = module.service.alb_arn_suffix
+  target_group_arn_suffix = module.service.target_group_arn_suffix
+  min_running_tasks       = 1
+}
+
+module "service" {
+  source = "../../modules/ecs-service"
+
+  name               = local.name
+  vpc_id             = module.network.vpc_id
+  vpc_cidr           = module.network.vpc_cidr
+  public_subnet_ids  = module.network.public_subnet_ids
+  private_subnet_ids = module.network.private_subnet_ids
+  image              = "${module.ecr.repository_url}:${var.image_tag}"
+  log_group_name     = module.observability.log_group_name
+  certificate_arn    = var.certificate_arn
+
+  capacity_provider = "FARGATE_SPOT"
+  desired_count     = 1
+  min_capacity      = 1
+  max_capacity      = 2
+}
