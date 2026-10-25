@@ -58,3 +58,15 @@ module "service" {
   min_capacity      = 1
   max_capacity      = 2
 }
+
+module "github_oidc" {
+  source = "../../modules/github-oidc"
+
+  role_name          = "${local.name}-github-deploy"
+  github_repository  = var.github_repository
+  github_environment = "staging"
+  ecr_repository_arn = module.ecr.repository_arn
+  kms_key_arn        = module.kms.key_arn
+  ecs_service_arn    = module.service.service_arn
+  pass_role_arns     = [module.service.execution_role_arn, module.service.task_role_arn]
+}

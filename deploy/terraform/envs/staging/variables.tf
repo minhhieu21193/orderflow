@@ -30,3 +30,9 @@ variable "certificate_arn" {
   type        = string
   default     = null
 }
+
+variable "github_repository" {
+  description = "GitHub repository (owner/name) allowed to deploy through OIDC."
+  type        = string
+  default     = "minhhieu21193/orderflow"
+}

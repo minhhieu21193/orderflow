@@ -22,3 +22,8 @@ output "dashboard_url" {
   description = "CloudWatch dashboard."
   value       = "https://${var.region}.console.aws.amazon.com/cloudwatch/home?region=${var.region}#dashboards/dashboard/${module.observability.dashboard_name}"
 }
+
+output "github_deploy_role_arn" {
+  description = "Set as AWS_DEPLOY_ROLE_ARN for the 'staging' GitHub Environment (and the repo variable for staging)."
+  value       = module.github_oidc.role_arn
+}

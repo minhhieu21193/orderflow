@@ -141,7 +141,6 @@ resource "aws_security_group" "alb" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "alb" {
-  #checkov:skip=CKV_AWS_260:The ALB is the public entry point; port 80 is open by design (redirects to 443 when a certificate is set).
   for_each = toset([for p in(local.https_enabled ? [80, 443] : [80]) : tostring(p)])
 
   security_group_id = aws_security_group.alb.id
@@ -196,8 +195,6 @@ resource "aws_lb_target_group" "this" {
 
 resource "aws_lb_listener" "http" {
   #checkov:skip=CKV_AWS_2:HTTP is served only until a certificate_arn is set; with one, this listener redirects to HTTPS.
-  #checkov:skip=CKV_AWS_103:Same as CKV_AWS_2 - TLS policy applies to the HTTPS listener created with certificate_arn.
-  #checkov:skip=CKV2_AWS_20:Redirect to HTTPS is enabled automatically once certificate_arn is set; the demo has no domain.
   load_balancer_arn = aws_lb.this.arn
   port              = 80
   protocol          = "HTTP"
