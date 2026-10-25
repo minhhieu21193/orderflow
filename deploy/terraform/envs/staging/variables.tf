@@ -36,3 +36,9 @@ variable "github_repository" {
   type        = string
   default     = "minhhieu21193/orderflow"
 }
+
+variable "monthly_budget_usd" {
+  description = "Monthly AWS Budgets limit in USD (alerts at 80% and 100%)."
+  type        = number
+  default     = 30
+}

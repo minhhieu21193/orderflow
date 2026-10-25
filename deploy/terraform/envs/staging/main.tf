@@ -70,3 +70,11 @@ module "github_oidc" {
   ecs_service_arn    = module.service.service_arn
   pass_role_arns     = [module.service.execution_role_arn, module.service.task_role_arn]
 }
+
+module "budget" {
+  source = "../../modules/budget"
+
+  name              = "${local.name}-monthly"
+  monthly_limit_usd = var.monthly_budget_usd
+  alert_emails      = [var.alert_email]
+}
