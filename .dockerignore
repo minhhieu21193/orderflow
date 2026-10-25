@@ -1,0 +1,18 @@
+# Only Go sources are needed in the build context.
+.git
+.github
+.claude
+.idea
+.vscode
+.DS_Store
+bin/
+deploy/
+docs/
+scripts/
+*.md
+*.out
+coverage.*
+.env
+.env.*
+Dockerfile
+docker-compose.yml

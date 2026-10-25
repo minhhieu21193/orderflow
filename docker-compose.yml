@@ -1,0 +1,19 @@
+# Local run of the API container. The app has no database yet, so this is
+# the API only; Postgres joins here when the repository layer lands.
+#   docker compose up --build
+#   curl localhost:8080/healthz
+services:
+  api:
+    build: .
+    image: orderflow:local
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+    # Same constraints as the ECS task: read-only root filesystem, no privileges.
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    stop_grace_period: 15s
