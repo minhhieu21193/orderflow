@@ -1,0 +1,8 @@
+# Shared checkov settings for every Terraform root (bootstrap, envs/*).
+# Rule skips are NOT listed here: each one sits next to the resource it applies
+# to as `#checkov:skip=<ID>:<reason>`, and deploy/README.md lists them all.
+framework:
+  - terraform
+download-external-modules: false
+compact: true
+quiet: true

@@ -15,3 +15,11 @@ coverage.*
 .DS_Store
 .idea/
 .vscode/
+
+# Terraform (lock files are committed; state and local vars are not)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+terraform.tfvars

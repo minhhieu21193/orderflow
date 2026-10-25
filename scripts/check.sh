@@ -46,8 +46,8 @@ step "terraform fmt"
 terraform fmt -check -recursive "$TF_ROOT"
 
 step "tflint (all modules and roots)"
-tflint --init --config "$PWD/.tflint.hcl" >/dev/null
-tflint --recursive --chdir="$TF_ROOT" --config "$PWD/.tflint.hcl"
+tflint --init --config "$PWD/$TF_ROOT/.tflint.hcl" >/dev/null
+tflint --recursive --chdir="$TF_ROOT" --config "$PWD/$TF_ROOT/.tflint.hcl"
 
 for dir in "$TF_ROOT"/bootstrap "$TF_ROOT"/envs/*; do
   [[ -d "$dir" ]] || continue
@@ -56,7 +56,7 @@ for dir in "$TF_ROOT"/bootstrap "$TF_ROOT"/envs/*; do
   terraform -chdir="$dir" validate -no-color
 
   step "checkov: $dir"
-  checkov -d "$dir" --config-file .checkov.yaml
+  checkov -d "$dir" --config-file "$TF_ROOT/.checkov.yaml"
 done
 
 step "all checks passed"
