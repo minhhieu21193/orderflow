@@ -42,3 +42,9 @@ variable "monthly_budget_usd" {
   type        = number
   default     = 100
 }
+
+variable "enable_rds" {
+  description = "Create a PostgreSQL instance and inject its connection settings into the task."
+  type        = bool
+  default     = false
+}

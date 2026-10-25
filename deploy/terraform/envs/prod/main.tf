@@ -53,6 +53,12 @@ module "service" {
   log_group_name     = module.observability.log_group_name
   certificate_arn    = var.certificate_arn
 
+  # Database connection, only when enable_rds = true.
+  environment         = local.db_environment
+  secrets             = local.db_secrets
+  secret_arns         = local.db_secret_arns
+  secrets_kms_key_arn = module.kms.key_arn
+
   capacity_provider = "FARGATE"
   desired_count     = 2
   min_capacity      = 2
@@ -77,4 +83,28 @@ module "budget" {
   name              = "${local.name}-monthly"
   monthly_limit_usd = var.monthly_budget_usd
   alert_emails      = [var.alert_email]
+}
+
+module "rds" {
+  source = "../../modules/rds"
+  count  = var.enable_rds ? 1 : 0
+
+  name                     = local.name
+  vpc_id                   = module.network.vpc_id
+  private_subnet_ids       = module.network.private_subnet_ids
+  client_security_group_id = module.service.task_security_group_id
+  kms_key_arn              = module.kms.key_arn
+  multi_az                 = true
+}
+
+locals {
+  db_secret_arn  = one(module.rds[*].master_user_secret_arn)
+  db_secret_arns = var.enable_rds ? [local.db_secret_arn] : []
+  db_secrets     = var.enable_rds ? { DB_PASSWORD = "${local.db_secret_arn}:password::" } : {}
+  db_environment = var.enable_rds ? {
+    DB_HOST = one(module.rds[*].address)
+    DB_PORT = tostring(one(module.rds[*].port))
+    DB_NAME = one(module.rds[*].database_name)
+    DB_USER = one(module.rds[*].master_username)
+  } : {}
 }
