@@ -11,6 +11,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/minhhieu21193/orderflow/internal/httpapi"
 )
 
 func worker(id int, jobs <-chan int, wg *sync.WaitGroup) {
@@ -45,6 +47,9 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
+
+	// Readiness probe for the load balancer health check.
+	mux.HandleFunc("GET /readyz", httpapi.Readyz)
 
 	mux.HandleFunc("POST /jobs", func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
