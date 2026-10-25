@@ -35,8 +35,8 @@ tf-bootstrap:
 
 tf-init:
 	@case "$(ENV)" in staging|prod) ;; *) echo "ENV must be staging or prod (got '$(ENV)')"; exit 1;; esac
-	@bucket=$$(terraform -chdir=$(TF_DIR)/bootstrap output -raw state_bucket 2>/dev/null) || \
-	  { echo "No state bucket found: run 'make tf-bootstrap' first."; exit 1; }; \
+	@bucket=$$(terraform -chdir=$(TF_DIR)/bootstrap output -raw state_bucket 2>/dev/null); \
+	if [ -z "$$bucket" ]; then echo "No state bucket found: run 'make tf-bootstrap' first."; exit 1; fi; \
 	terraform -chdir=$(TF_ENV_DIR) init -input=false -reconfigure \
 	  -backend-config="bucket=$$bucket" \
 	  -backend-config="key=$(ENV)/terraform.tfstate" \
