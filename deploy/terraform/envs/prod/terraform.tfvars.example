@@ -1,0 +1,4 @@
+# Copy to terraform.tfvars (gitignored) and edit. image_tag is passed by make.
+owner       = "your-name"
+alert_email = "you@example.com"
+# certificate_arn = "arn:aws:acm:ap-southeast-1:<account>:certificate/<id>"

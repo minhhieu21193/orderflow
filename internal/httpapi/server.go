@@ -18,16 +18,24 @@ import (
 func New(logger *slog.Logger) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", handleHealthz)
+	mux.HandleFunc("GET /readyz", Readyz)
 
 	// Middleware wraps the whole mux so every request is logged once, centrally.
 	return requestLogger(logger, mux)
 }
 
 // handleHealthz is a liveness probe: it answers "the process is up and serving".
-// It deliberately checks nothing external — readiness (DB, Redis reachable)
-// will be a separate /readyz endpoint once those dependencies exist.
+// It deliberately checks nothing external — readiness lives in Readyz.
 func handleHealthz(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// Readyz is the readiness probe the load balancer uses to decide whether to
+// send traffic. There are no external dependencies yet, so it always reports
+// ready; DB and Redis checks belong here once those dependencies exist.
+// It is exported so cmd/api can mount it on its own mux.
+func Readyz(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ready"})
 }
 
 // requestLogger logs one line per request with method, path, status and latency.

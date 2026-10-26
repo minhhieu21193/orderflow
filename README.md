@@ -29,6 +29,14 @@ Configuration is read from the environment:
 | `PORT`      | `8080`  | HTTP listen port               |
 | `LOG_LEVEL` | `info`  | `debug` / `info` / `warn` / `error` |
 
+## Deploy on AWS
+
+The `deploy/` directory runs the API on ECS Fargate behind an ALB. It uses
+Terraform with staging and prod environments, and a GitHub Actions pipeline
+that authenticates with OIDC. `make up ENV=staging` and
+`make down ENV=staging` create and remove an environment. Setup, costs and
+troubleshooting are in [deploy/README.md](deploy/README.md).
+
 ## Layout
 
 ```
