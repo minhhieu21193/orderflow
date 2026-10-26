@@ -89,7 +89,7 @@ flowchart LR
   pr[Pull request] --> ci{{ci.yml}}
   ci --> go[go vet + go test -race]
   ci --> img[docker build -> smoke test -> Trivy, fails on CRITICAL]
-  ci --> tf[terraform fmt, validate, tflint, checkov<br/>bootstrap, staging, prod]
+  ci --> tf[terraform fmt, validate, tflint on 1.10.0 and 1.17.0<br/>checkov<br/>bootstrap, staging, prod]
 
   main[Push to main] --> gate{AWS_DEPLOY_ROLE_ARN set?}
   gate -- no --> skip[Notice: deploy skipped, run stays green]
@@ -158,7 +158,8 @@ scope each budget to its env.
 ## First-time setup
 
 Prerequisites: an AWS account and admin credentials for it in your shell
-(`aws sts get-caller-identity` works), Terraform 1.17.x, Docker with
+(`aws sts get-caller-identity` works), Terraform 1.10 or newer (1.10 added
+S3 native state locking; CI checks 1.10.0 and 1.17.0), Docker with
 buildx, and `make`. Region defaults to `ap-southeast-1`; pass `REGION=...`
 to any make target to change it.
 

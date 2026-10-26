@@ -1,5 +1,7 @@
 terraform {
-  required_version = "~> 1.17"
+  # 1.10 is the oldest release this code supports: it added S3 native state
+  # locking (use_lockfile). CI validates with 1.10.0 and the latest 1.x.
+  required_version = "~> 1.10"
 
   required_providers {
     aws = {
